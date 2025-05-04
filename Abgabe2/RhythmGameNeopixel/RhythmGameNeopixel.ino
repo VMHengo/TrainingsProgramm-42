@@ -6,21 +6,18 @@
  
 // We need the Adafruit Arcada Library for our basic functionality
 #include <Adafruit_Arcada.h>
-// t1: include Neopixel library
+// t2: include Neopixel library
 #include <Adafruit_NeoPixel.h>
 // We can also include our own files in the project
 #include "images.h"
 
 #include <vector>
 
-// t1: Neopixels are attached to PIN D8
+// t2: Neopixels are attached to PIN D8
 #define PIN 8 
 
-// t1: How many NeoPixels are attached to the Arduino?
+// t2: How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS 5
-
-// // t1: Time (in milliseconds) to pause between pixels
-// #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
 // Global variables
 Adafruit_Arcada arcada;
@@ -49,7 +46,7 @@ bool rightButtonReleased = true;
 uint8_t pixelBrightness = 2;
 std::vector<uint8_t> brightnessLevels = {5, 10, 30, 60, 100, 150, 255};
 
-// t1: initialize pixels object
+// t2: initialize pixels object
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 // Color constants
@@ -83,10 +80,10 @@ void setup() {
   arcada.setBacklight(255);
   arcada.createFrameBuffer(ARCADA_TFT_WIDTH, ARCADA_TFT_HEIGHT);
 
-  // t1: INITIALIZE NeoPixel strip object
+  // t2: INITIALIZE NeoPixel strip object
   pixels.begin(); 
 
-  pixels.setBrightness(pixelBrightness); // t1: set Neopixel brightness between 0 and 255
+  pixels.setBrightness(pixelBrightness); // t2: set Neopixel brightness between 0 and 255
 
   Serial.println("Initializing neopixels...");
 
@@ -102,7 +99,7 @@ void setup() {
  */
 void loop() {
 
-  // t1: set all pixels to off
+  // t2: set all pixels to off
   pixels.clear();
 
   // let's just pretend it's a state machine
@@ -115,7 +112,7 @@ void loop() {
   // render the frame buffer to the screen
   arcada.blitFrameBuffer(0, 0, true, false);
 
-  // t1: Send the updated pixel colors to the hardware.
+  // t2: Send the updated pixel colors to the hardware.
   pixels.show();
 
   // perform standard board functions (cooperative multitasking)
@@ -172,7 +169,7 @@ void handleMenu() {
     rightButtonReleased = true;
   }
 
-  // t1: fill screen black after selecting difficulty
+  // t2: fill screen black after selecting difficulty
   canvas->fillScreen(ARCADA_BLACK);
 
   // TO DO: Update Neopixels based on difficulty
@@ -207,37 +204,35 @@ void handleGameplay() {
   uint32_t timeNow = millis();
 
   // -----------------------
-  // TO DO: Main Game Loop
+  // t2: Main Game Loop
   // -----------------------
 
-  // // render a filled circle and then a smaller filled circle to get a border of chosen thickness
-  // if ((int32_t)(beatTime - timeNow) > 0) {
-  //   canvas->fillCircle(ARCADA_TFT_WIDTH/2+offsetX, ARCADA_TFT_HEIGHT/2+offsetY, circleSize, ARCADA_BLUE);
-  // } else {
-  //   canvas->fillCircle(ARCADA_TFT_WIDTH/2+offsetX, ARCADA_TFT_HEIGHT/2+offsetY, circleSize, ARCADA_BLUE);
-  // }
-  // canvas->fillCircle(ARCADA_TFT_WIDTH/2+offsetX, ARCADA_TFT_HEIGHT/2+offsetY, circleSize-5, ARCADA_BLACK);
+  // calculate pixel beat indicator position
+  int32_t beatDiff = abs((int32_t)(beatTime - timeNow));
+  int32_t pixelIndex = map(beatDiff, 0, 175, 0, 3);
+  
+  pixels.setPixelColor(pixelIndex, NEO_BLUE);
 
   // render indicator circle if needed
   if (timeNow - beatTime > 0 && timeNow - beatTime < 100) {
     if (buttonPressedForLastBeat) {
       if (abs(timingOffset) < 50) {
         // good
-        pixels.setPixelColor(2, NEO_GREEN);
+        pixels.setPixelColor(0, NEO_GREEN);
       } else if (abs(timingOffset) < 90) {
         // barely ok
-        pixels.setPixelColor(2, NEO_YELLOW);
+        pixels.setPixelColor(0, NEO_YELLOW);
       } else {
         // bad
-        pixels.setPixelColor(2, NEO_RED);
+        pixels.setPixelColor(0, NEO_RED);
       }
     } else {
       // missed a beat and hit the button before the next beat occured
-      pixels.setPixelColor(2, NEO_RED);
+      pixels.setPixelColor(0, NEO_RED);
     }
-  } else {
-    pixels.setPixelColor(2, NEO_BLUE);
-  }
+  } //else {
+  //   pixels.setPixelColor(0, NEO_BLUE);
+  // }
 }
 
 
