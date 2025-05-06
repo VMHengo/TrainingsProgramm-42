@@ -169,15 +169,35 @@ void handleMenu() {
     rightButtonReleased = true;
   }
 
-  // t2: fill screen black after selecting difficulty
-  canvas->fillScreen(ARCADA_BLACK);
+  // use standard rendering functions without directly updating the screen
+  canvas->fillScreen(ARCADA_WHITE);
+  
+  canvas->setTextSize(2);
+  canvas->setTextColor(ARCADA_BLUE);
+  canvas->setCursor(2, 2);
+  canvas->print("Not your");
+  canvas->setTextColor(ARCADA_PURPLE);
+  canvas->setCursor(18, 18);
+  canvas->print("Ordinary");
+  canvas->setTextColor(ARCADA_RED);
+  canvas->setCursor(34, 34);
+  canvas->print("Percussion");
+  canvas->setTextColor(ARCADA_ORANGE);
+  canvas->setCursor(50, 50);
+  canvas->print("Escapade");
 
+  if (easyMode) {
+    canvas->drawRGBBitmap(ARCADA_TFT_WIDTH/2 - 32, ARCADA_TFT_HEIGHT - 64, drum_easy, 64, 64);
+  } else {
+    canvas->drawRGBBitmap(ARCADA_TFT_WIDTH/2 - 32, ARCADA_TFT_HEIGHT - 64, drum_hard, 64, 64);
+  }
   // TO DO: Update Neopixels based on difficulty
   if (easyMode) {
     pixels.fill(NEO_GREEN);
   } else {
     pixels.fill(NEO_RED);
   }
+
 }
 
 
@@ -206,6 +226,10 @@ void handleGameplay() {
   // -----------------------
   // t2: Main Game Loop
   // -----------------------
+
+  // t2: fill screen black after selecting difficulty
+  GFXcanvas16 *canvas = arcada.getCanvas();
+  canvas->fillScreen(ARCADA_BLACK);
 
   // calculate pixel beat indicator position
   int32_t beatDiff = abs((int32_t)(beatTime - timeNow));
