@@ -1,28 +1,63 @@
 #include <IRremote.h>
 
 const int irReceiverPin = 2;
-const int ledPinRed = 13;
-const int ledPinYellow = 12;
+const int ledPinIndicator = 12;
 
-unsigned long startTime;
-unsigned long roundStartTime;
-
-bool shotBeforeLight = false;
-bool targetShot = true;
-bool roundStart = true;
-bool needSetup = false;
-
+unsigned long reactionTimer;
+unsigned long newGameStartTimer;
 int randomInt;
 
+bool earlyShot;
+bool newRound = true;
+bool randomTimePassed;
 
+// -----------------------------------------------------------------
 
 void setup() {
-  pinMode(ledPinRed, OUTPUT);
-  pinMode(ledPinYellow, OUTPUT);
+  pinMode(ledPinIndicator, OUTPUT);
   attachInterrupt(digitalPinToInterrupt(2), irISR, RISING);
   Serial.begin(9600);
-  IrReceiver.begin(irReceiverPin, ENABLE_LED_FEEDBACK);  // Enable IR receiver on pin 2
+  IrReceiver.begin(irReceiverPin, DISABLE_LED_FEEDBACK);  // Enable IR receiver on pin 2
 }
+
+void loop() {
+  // Benötigter Setup bei Rundenstart, um die LED nach [randomInt] Sekunden aufleuchten zu lassen
+  if(newRound){
+    newGameStartTimer = millis();
+    randomInt = random(1,5);
+    newRound = false;
+    randomTimePassed = false;
+  }
+
+  // Sobald mehr Zeit vergangen ist als [randomInt] Sekunden, leuchter die Indikator LED auf
+  if ((millis() - newGameStartTimer) > (randomInt * 1000) && !randomTimePassed){
+    digitalWrite(ledPinIndicator, HIGH);
+    reactionTimer = millis();
+    randomTimePassed = true;
+  }
+  
+  // Wird ausgeführt, wenn auf den Receiver geschossen wurde
+  if (IrReceiver.decode()) {
+    // Print received code
+    Serial.print("Reversed raw: 0x");
+    Serial.println(fixBits(IrReceiver.decodedIRData.decodedRawData), HEX);
+    if(!earlyShot){
+      // Berechne die Reaktionszeit
+      unsigned long totalTime = millis() - reactionTimer;
+      Serial.print("Reaction time: ");
+      Serial.println(totalTime);
+      digitalWrite(ledPinIndicator, LOW);
+      newRound = true;
+    }else{
+      Serial.println("Verkakt");
+      earlyShot = false;
+    }
+    IrReceiver.resume();  // Prepare for the next signal
+    delay(100);  // Optional: avoid flooding
+  }
+}
+
+// -----------------------------------------------------------------
 
 uint32_t fixBits(uint32_t val) {
   uint32_t result = 0;
@@ -35,44 +70,9 @@ uint32_t fixBits(uint32_t val) {
 }
 
 void irISR() {
-  if(digitalRead(12) == HIGH){
-    shotBeforeLight = false;
+  if(digitalRead(ledPinIndicator) == HIGH){
+    earlyShot = false;
   }else{
-    shotBeforeLight = true;
-  }
-}
-
-
-void loop() {
-  if(roundStart){
-    roundStartTime = millis();
-    randomInt = random(1,5);
-    roundStart = false;
-    needSetup = true;
-  }
-  
-  if ((millis() - roundStartTime) > (randomInt * 1000) && needSetup){
-    digitalWrite(ledPinYellow, HIGH);
-    startTime = millis();
-    needSetup = false;
-  }
-  
-  if (IrReceiver.decode()) {
-    digitalWrite(ledPinRed, HIGH);
-    unsigned long totalTime = millis() - startTime;
-    // Print received code
-    Serial.print("Reversed raw: 0x");
-    Serial.println(fixBits(IrReceiver.decodedIRData.decodedRawData), HEX);
-    if(!shotBeforeLight){
-      Serial.print("Reaction time: ");
-      Serial.println(totalTime);
-      digitalWrite(ledPinYellow, LOW);
-      roundStart = true;
-    }else{
-      Serial.println("Verkakt");
-      shotBeforeLight = false;
-    }
-    IrReceiver.resume();  // Prepare for the next signal
-    delay(100);  // Optional: avoid flooding
+    earlyShot = true;
   }
 }
