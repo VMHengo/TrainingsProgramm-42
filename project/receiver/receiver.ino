@@ -15,7 +15,7 @@ bool randomTimePassed;
 
 void setup() {
   pinMode(ledPinIndicator, OUTPUT);
-  attachInterrupt(digitalPinToInterrupt(2), irISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(irReceiverPin), irISR, RISING);
   Serial.begin(9600);
   IrReceiver.begin(irReceiverPin, DISABLE_LED_FEEDBACK);  // Enable IR receiver on pin 2
 }
