@@ -11,8 +11,25 @@ const int feedbackDuration = 100; //in ms
 
 uint32_t message = 0xB1B1B1B1;
 
+bool triggerReleased = true;
+
+int currentBullet = 0;
+
+const int chords[5][5] = {
+  {440, 622, 0, 0, 0},       // Schuss 1: A + D# (Tritonus)
+  {392, 523, 622, 0, 0},     // Schuss 2: G + C + D# (düster, halbdissonant)
+  {349, 494, 587, 659, 0},   // Schuss 3: F + B + D + E (dissonant cluster)
+  {330, 440, 554, 622, 698}, // Schuss 4: E + A + C# + D# + F (spannend)
+  {311, 392, 466, 523, 622}  // Schuss 5: D# + G + A# + C + D# (fast atonal)
+};
+
+const int chordLengths[5] = {2, 3, 4, 5, 5}; // Anzahl Töne pro Akkord
+const int chordTotalDuration = 200;  // Dauer jedes Akkords
+const int pauseBetweenShots = 150;
+
 
 IRsend irsend;
+
 
 void setup() {
   pinMode(buttonPin, INPUT);
@@ -21,18 +38,41 @@ void setup() {
   IrSender.begin(irLedPin);  // Start IR transmitter on pin 8
 }
 
-void playPew() {
-  for (int freq = 1200; freq >= 200; freq -= 20) {
-    tone(speakerPin, freq);
-    delay(10);
+void playChord(const int* freqs, int count) {
+  int singleDuration = chordTotalDuration / count;
+  for (int i = 0; i < count; i++) {
+    if (freqs[i] > 0) {
+      tone(speakerPin, freqs[i]);
+      delay(singleDuration);
+      noTone(speakerPin);
+    }
   }
-  noTone(speakerPin);
 }
 
-void shootLaser(){
+void playReadyChord() {
+  int readyChord[] = {261, 329, 392};
+  for (int i = 0; i < 3; i++) {
+    tone(speakerPin, readyChord[i]);
+    delay(70);
+    noTone(speakerPin);
+  }
+}
+
+void playReloadSound() {
+  for (int f = 300; f <= 1500; f += 25) {
+    tone(speakerPin, f);
+    delay(15);
+  }
+  noTone(speakerPin);
+  playReadyChord();
+}
+
+void feedbackShot(int ms){
   digitalWrite(laserPin, HIGH);
-  delay(100);
+  analogWrite(motorPin, vibrationStrength);
+  delay(ms);
   digitalWrite(laserPin, LOW);
+  analogWrite(motorPin, 0);
 }
 
 void vibrateMotor(){
@@ -42,12 +82,22 @@ void vibrateMotor(){
 }
 
 void loop() {
-  if (digitalRead(buttonPin) == HIGH) {
+  if ((digitalRead(buttonPin) == HIGH) && triggerReleased) {
+    triggerReleased = false;
     IrSender.sendNEC(message, 32);  // 32-bit example code
-    shootLaser();
-    // Send a specific code using NEC protocol
-    vibrateMotor();
+    feedbackShot(150);
     
-    delay(300);  // Debounce delay
+    playChord(chords[currentBullet], chordLengths[currentBullet]);
+
+    currentBullet = (currentBullet + 1) % 5;
+    
+
+    //delay(400);  // Debounce delay
+  }else if ((digitalRead(buttonPin) == LOW) && !triggerReleased){
+    triggerReleased = true;
+    if(currentBullet == 0){
+      delay(100);
+      playReloadSound();
+    }
   }
 }
