@@ -1,5 +1,5 @@
-## "TrainingsProgramm 42" - A Lasertag target shooting game -
-[![Watch the video](https://github.com/VMHengo/TrainingsProgramm-42/blob/main/media/presentation/Thumbnail.png)](https://github.com/VMHengo/TrainingsProgramm-42/blob/main/media/presentation/Trailer.mp4)
+## "TrainingsProgramm 42" - A Lasertag target shooting game
+[![Watch the video](https://img.youtube.com/vi/itRIaU-dj6U/0.jpg)](https://youtu.be/itRIaU-dj6U)
 
 ## Description
 This was a university project about screenless games. We decided to build a fast paced reactive multiplayer game about shooting rapid blinking targets with lasertag pistols.
